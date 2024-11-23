@@ -307,7 +307,7 @@ def get_image_prompts(image):
 
         # 调用API生成提示词
         response = client.chat.completions.create(
-            model="meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo",
+            model="meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
             messages=messages,
             temperature=0.7,
             top_p=0.7,
