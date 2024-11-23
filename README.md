@@ -34,7 +34,7 @@
 
 1. 克隆仓库：
 ```bash
-git clone [your-repository-url]
+git clone https://github.com/nicekate/Together-Flux-Studio
 cd Together-Flux-Studio
 ```
 
@@ -109,6 +109,29 @@ source ~/.bash_profile  # 或 source ~/.zshrc
 1. 上传想要分析的图片
 2. 点击"分析图片"
 3. 查看生成的提示词建议
+
+## 常见问题
+
+### Q: 为什么图片生成速度较慢？
+A: 生成速度受多个因素影响：
+- 网络连接质量
+- 选择的模型类型
+- 服务器负载情况
+- 图片尺寸和生成参数
+
+### Q: 如何提高生成质量？
+A: 可以尝试以下方法：
+- 使用更详细的提示词描述
+- 增加生成步数
+- 尝试不同的随机种子
+- 选择更高级的模型
+
+### Q: API密钥无法使用怎么办？
+A: 请检查：
+- API密钥是否正确配置
+- 账户余额是否充足
+- 是否完成了必要的身份验证
+- Together AI服务是否正常运行
 
 ## 注意事项
 
