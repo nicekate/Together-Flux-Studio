@@ -273,27 +273,44 @@ def get_image_prompts(image):
         str: 生成的提示词或错误消息
     """
     if image is None:
+        logger.error("未提供图片")
         return "请先上传图片"
     
     try:
-        # 将图片转换为base64格式
+        # 验证图片格式和大小
+        if not isinstance(image, Image.Image):
+            logger.error(f"无效的图片类型: {type(image)}")
+            return "无效的图片格式，请上传有效的图片文件"
+            
+        # 检查图片大小并调整
+        img_size = image.size
+        if img_size[0] * img_size[1] > 4096 * 4096:
+            logger.warning(f"图片太大 ({img_size}), 自动调整大小")
+            ratio = min(4096/img_size[0], 4096/img_size[1])
+            new_size = (int(img_size[0]*ratio), int(img_size[1]*ratio))
+            image = image.resize(new_size, Image.LANCZOS)
+        
+        # 转换为RGB并编码为base64
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        
         buffered = BytesIO()
-        image.save(buffered, format="JPEG")
+        image.save(buffered, format="JPEG", quality=95)
         img_str = base64.b64encode(buffered.getvalue()).decode()
         
-        # 准备对话消息
+        logger.info("开始分析图片...")
+        
+        # 创建Together客户端
         client = Together()
+        
+        # 构建请求消息
         messages = [
-            {
-                "role": "system",
-                "content": "你是一位专业的AI艺术专家。你的任务是分析图片并提供能重新创建类似图片的AI艺术提示词。请始终提供3个提示词，分别关注不同方面如风格、构图和细节。"
-            },
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "text",
-                        "text": "分析这张图片并写出3个不同的AI艺术提示词，每个提示词关注不同的方面。格式：1. [提示词1] 2. [提示词2] 3. [提示词3]"
+                        "text": "Generate a single, comprehensive AI art prompt for this image. Include style, composition, lighting, colors, mood, and technical details. Make it detailed enough to recreate a similar image. Format the response as a single paragraph without numbering or bullet points."
                     },
                     {
                         "type": "image_url",
@@ -304,38 +321,40 @@ def get_image_prompts(image):
                 ]
             }
         ]
-
-        # 调用API生成提示词
+        
+        # 创建流式响应
         response = client.chat.completions.create(
-            model="meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+            model="meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo",
             messages=messages,
+            max_tokens=512,
             temperature=0.7,
             top_p=0.7,
             top_k=50,
             repetition_penalty=1,
             stop=["<|eot_id|>", "<|eom_id|>"],
-            max_tokens=512
+            stream=True
         )
         
-        result = response.choices[0].message.content.strip()
+        # 收集完整的响应
+        full_response = ""
+        for chunk in response:
+            if hasattr(chunk, 'choices') and chunk.choices:
+                content = chunk.choices[0].delta.content
+                if content:
+                    full_response += content
         
-        # 检查响应是否包含拒绝或错误信息
-        error_phrases = [
-            "i'm not", "cannot", "sorry", "unable", 
-            "don't", "do not", "won't", "will not",
-            "inappropriate", "not appropriate"
-        ]
+        # 直接返回AI的回复
+        return full_response.strip()
         
-        if any(phrase in result.lower() for phrase in error_phrases):
-            return "无法分析此图片，请尝试上传其他图片。提示：上传AI生成的图片效果更好。"
-            
-        # 如果响应太短，可能不是有效的提示词
-        if len(result.split()) < 10:
-            return "生成的提示词无效，请重试或上传其他图片"
-            
-        return result
     except Exception as e:
-        return f"生成提示词时出错: {str(e)}"
+        logger.error(f"图片分析出错: {str(e)}", exc_info=True)
+        if "connection" in str(e).lower():
+            return "连接服务器失败，请检查网络连接后重试"
+        elif "timeout" in str(e).lower():
+            return "请求超时，请稍后重试"
+        elif "quota" in str(e).lower() or "rate" in str(e).lower():
+            return "API调用次数超限，请稍后重试"
+        return f"分析图片时出错: {str(e)}"
 
 # 定义界面样式
 css = """
@@ -373,7 +392,7 @@ with gr.Blocks(theme=gr.themes.Soft(), css=css) as demo:
         gr.HTML(
             """
             <div class="app-title">
-                <h1>🌊 Together Flux Studio</h1>
+                <h1>Together Flux Studio</h1>
                 <p>Powered by Together AI</p>
             </div>
             """
@@ -677,6 +696,6 @@ if __name__ == "__main__":
     # 启动Gradio应用
     demo.launch(
         server_name="127.0.0.1",  # 本地服务器
-        show_error=True,          # 显示错误信息
+        show_error=False,          # 显示错误信息
         share=False              # 不创建公共链接
     )
