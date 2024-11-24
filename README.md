@@ -10,7 +10,9 @@
 
 ## 视频教程
 
-📺 观看详细的使用教程：[Together Flux Studio 使用指南](https://www.bilibili.com/video/BV1pCBHYqEaT/)
+📺 观看详细的使用教程：
+- Bilibili：[Together Flux Studio 使用指南](https://www.bilibili.com/video/BV1pCBHYqEaT/)
+- YouTube：[Together Flux Studio Tutorial](https://youtu.be/qCrNcMtsdR8?si=WtQKvSX5MkeQ00yA)
 
 ## 功能特点
 
