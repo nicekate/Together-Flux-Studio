@@ -417,7 +417,7 @@ with gr.Blocks(theme=gr.themes.Soft(), css=css) as demo:
                     text2img_model = gr.Dropdown(
                         choices=list(TEXT2IMG_MODELS.keys()),
                         value="FLUX.1-dev",
-                        label="Select Model (Credit Card Required)"
+                        label="Select Model"
                     )
                     
                     # 图片尺寸控制
